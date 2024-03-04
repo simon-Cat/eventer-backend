@@ -1,7 +1,7 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from io import BytesIO
 import json
-from _g_posts import _g_posts
+from db import cursor
 
 
 class MyServer(BaseHTTPRequestHandler):
@@ -19,7 +19,10 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        self.wfile.write(json.dumps(_g_posts).encode('utf-8'))
+        cursor.execute(' SELECT * FROM events')
+        all_users = cursor.fetchall()
+
+        self.wfile.write(json.dumps(all_users).encode('utf-8'))
 
     def do_POST(self):
         self.send_response(200)
@@ -30,7 +33,12 @@ class MyServer(BaseHTTPRequestHandler):
 
         data = json.loads(body.decode())
 
-        print(type(data), data)
+        event_title = data.get('eventTitle')
+        event_description = data.get('eventDescription')
+        event_image = data.get('eventImage')
+
+        # BD
+        cursor.execute('INSERT INTO events (title, description, image) VALUES (%s, %s, %s)', (event_title, event_description, event_image))
 
         response = BytesIO()
         response.write(body)
